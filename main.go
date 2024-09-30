@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
+	"unicode"
 )
 
 func smallNumbers(numberBig int) []int {
@@ -72,11 +74,14 @@ func doOperation(randomOperation string, firstNumber int, secondNumber int) int 
 	switch randomOperation {
 	case "+":
 		result = firstNumber + secondNumber
+		fmt.Println("+", firstNumber+secondNumber)
 	case "-":
 		result = firstNumber - secondNumber
+		fmt.Println("-", firstNumber-secondNumber)
 	case "/":
 		if secondNumber != 0 {
 			result = firstNumber / secondNumber
+			fmt.Println("/", firstNumber/secondNumber)
 		} else {
 			result = firstNumber // Handle division by zero by ignoring it
 		}
@@ -87,6 +92,59 @@ func doOperation(randomOperation string, firstNumber int, secondNumber int) int 
 		result = firstNumber
 	}
 	return result
+}
+
+// checkAnswer takes the user's input, evaluates it, and compares it to the final result.
+func checkAnswer(finalResult int, answer string) bool {
+	// Evaluate the user's input as a simple mathematical expression
+	evaluatedResult, err := evaluateExpression(answer)
+	if err != nil {
+		fmt.Println("Error evaluating answer:", err)
+		return false
+	}
+	fmt.Println("Evaluated Result:", evaluatedResult)
+
+	// Check if the evaluated result matches the final result
+	return evaluatedResult == finalResult
+}
+
+// evaluateExpression takes a string input and evaluates it as a simple arithmetic expression.
+func evaluateExpression(expression string) (int, error) {
+	var stack []int
+	var currentNumber int
+	var currentOperation rune = '+'
+
+	for i, char := range expression {
+		if unicode.IsDigit(char) {
+			// Convert character to integer
+			digit, _ := strconv.Atoi(string(char))
+			currentNumber = currentNumber*10 + digit
+		}
+
+		if !unicode.IsDigit(char) && !unicode.IsSpace(char) || i == len(expression)-1 {
+			// Process the current operation when encountering an operator or at the end
+			switch currentOperation {
+			case '+':
+				stack = append(stack, currentNumber)
+			case '-':
+				stack = append(stack, -currentNumber)
+			case '*':
+				stack[len(stack)-1] *= currentNumber
+			case '/':
+				stack[len(stack)-1] /= currentNumber
+			}
+			currentOperation = char
+			currentNumber = 0
+		}
+	}
+
+	// Sum up the stack
+	result := 0
+	for _, num := range stack {
+		result += num
+	}
+
+	return result, nil
 }
 
 func main() {
@@ -110,6 +168,19 @@ func main() {
 
 		finalResult = doOperations(startNumber, allNumbers)
 	}
+
 	fmt.Println("Chosen Numbers:", allNumbers)
 	fmt.Println("Final Result after Operations:", finalResult)
+
+	// Get user's answer as a string input
+	var userAnswer string
+	fmt.Println("Enter your calculation to check if it matches the final result: ")
+	fmt.Scanln(&userAnswer)
+
+	// Check if the user's answer matches the final result
+	if checkAnswer(finalResult, userAnswer) {
+		fmt.Println("Correct! Your calculation matches the final result.")
+	} else {
+		fmt.Println("Incorrect. Your calculation does not match the final result.")
+	}
 }
