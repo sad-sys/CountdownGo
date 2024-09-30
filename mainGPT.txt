@@ -1,0 +1,97 @@
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+// Main function where execution begins
+func main() {
+	rand.Seed(time.Now().UnixNano())
+	fmt.Println("Give me the number of Big Numbers to Choose (between 1 and 4): ")
+
+	var numberBig int
+	fmt.Scan(&numberBig)
+
+	if numberBig < 1 || numberBig > 4 {
+		fmt.Println("Please choose a number between 1 and 4.")
+		return
+	}
+
+	allNumbers := chooseNumbers(numberBig)
+	fmt.Println("Numbers chosen:", allNumbers)
+
+	numOps := generateRandomOps()                 // Generate random number of operations between 3-10
+	result := applyOperations(numOps, allNumbers) // Apply random operations
+	fmt.Println("Final result after operations:", result)
+}
+
+// Function to generate small numbers
+func smallNumbers(numberBig int) []int {
+	smallNumbers := []int{}
+	for i := 0; i < (5 - numberBig); i++ {
+		randomSmall := rand.Intn(10) + 1 // Random number between 1 and 10
+		smallNumbers = append(smallNumbers, randomSmall)
+	}
+	return smallNumbers
+}
+
+// Function to generate big numbers
+func bigNumbers(numberBig int) []int {
+	bigNumberToChoose := [4]int{25, 50, 75, 100}
+	bigNumbersChosen := []int{}
+	for i := 0; i < numberBig; i++ {
+		bigNumberPosition := rand.Intn(4)
+		bigNumberChosen := bigNumberToChoose[bigNumberPosition]
+		bigNumbersChosen = append(bigNumbersChosen, bigNumberChosen)
+	}
+	return bigNumbersChosen
+}
+
+// Function to combine big and small numbers
+func chooseNumbers(numberBig int) []int {
+	smallNumbers := smallNumbers(numberBig)
+	bigNumbers := bigNumbers(numberBig)
+
+	allNumbers := append(bigNumbers, smallNumbers...)
+	return allNumbers
+}
+
+// Function to generate random number of operations (between 3 and 10)
+func generateRandomOps() int {
+	return rand.Intn(8) + 3 // Random number between 3 and 10
+}
+
+// Function to apply random operations on the numbers
+func applyOperations(numOps int, numbers []int) int {
+	if len(numbers) == 0 {
+		return 0
+	}
+
+	result := numbers[0] // Start with the first number
+	for i := 1; i < len(numbers) && i <= numOps; i++ {
+		op := rand.Intn(4) // Choose a random operation: 0 = +, 1 = -, 2 = *, 3 = /
+		switch op {
+		case 0:
+			fmt.Printf("%d + %d = ", result, numbers[i])
+			result += numbers[i]
+		case 1:
+			fmt.Printf("%d - %d = ", result, numbers[i])
+			result -= numbers[i]
+		case 2:
+			fmt.Printf("%d * %d = ", result, numbers[i])
+			result *= numbers[i]
+		case 3:
+			if numbers[i] != 0 { // Prevent division by zero
+				fmt.Printf("%d / %d = ", result, numbers[i])
+				result /= numbers[i]
+			} else {
+				fmt.Printf("Division by zero skipped\n")
+			}
+		}
+		fmt.Println(result) // Print intermediate result
+	}
+
+	return result
+}
