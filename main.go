@@ -1,3 +1,6 @@
+//Function to generate all permutations to get to that number
+//Print out all permutations
+
 package main
 
 import (
@@ -74,24 +77,101 @@ func doOperation(randomOperation string, firstNumber int, secondNumber int) int 
 	switch randomOperation {
 	case "+":
 		result = firstNumber + secondNumber
-		fmt.Println("+", firstNumber+secondNumber)
 	case "-":
 		result = firstNumber - secondNumber
-		fmt.Println("-", firstNumber-secondNumber)
 	case "/":
 		if secondNumber != 0 {
 			result = firstNumber / secondNumber
-			fmt.Println("/", firstNumber/secondNumber)
 		} else {
 			result = firstNumber // Handle division by zero by ignoring it
 		}
 	case "*":
 		result = firstNumber * secondNumber
 	default:
-		fmt.Println("Unsupported operation")
 		result = firstNumber
 	}
 	return result
+}
+
+// Helper function to generate all permutations of a slice of integers
+func permute(nums []int, start int, result *[][]int) {
+	if start == len(nums) {
+		perm := make([]int, len(nums))
+		copy(perm, nums)
+		*result = append(*result, perm)
+		return
+	}
+	for i := start; i < len(nums); i++ {
+		nums[start], nums[i] = nums[i], nums[start]
+		permute(nums, start+1, result)
+		nums[start], nums[i] = nums[i], nums[start] // backtrack
+	}
+}
+
+// Helper function to apply operations on two integers
+func applyOperation(a, b int, op string) (int, bool) {
+	switch op {
+	case "+":
+		return a + b, true
+	case "-":
+		return a - b, true
+	case "*":
+		return a * b, true
+	case "/":
+		if b != 0 && a%b == 0 { // Ensure no division by zero and integer division
+			return a / b, true
+		}
+		return 0, false
+	}
+	return 0, false
+}
+
+// Function to check all possible results for a given permutation of numbers and operations
+func evaluatePermutation(nums []int, ops []string, finalResult int) {
+	for _, op1 := range ops {
+		for _, op2 := range ops {
+			for _, op3 := range ops {
+				for _, op4 := range ops {
+					// Apply the operations between the numbers
+					result1, valid := applyOperation(nums[0], nums[1], op1)
+					if !valid {
+						continue
+					}
+					result2, valid := applyOperation(result1, nums[2], op2)
+					if !valid {
+						continue
+					}
+					result3, valid := applyOperation(result2, nums[3], op3)
+					if !valid {
+						continue
+					}
+					result4, valid := applyOperation(result3, nums[4], op4)
+					if !valid {
+						continue
+					}
+
+					// Check if the result matches the finalResult
+					if result4 == finalResult {
+						fmt.Printf("%d %s %d %s %d %s %d %s %d = %d\n", nums[0], op1, nums[1], op2, nums[2], op3, nums[3], op4, nums[4], finalResult)
+					}
+				}
+			}
+		}
+	}
+}
+
+// Main function to generate permutations and evaluate them
+func findPermutationsAndEvaluate(finalResult int, numbers []int) {
+	ops := []string{"+", "-", "*", "/"}
+
+	// Generate all permutations of the numbers
+	var permutations [][]int
+	permute(numbers, 0, &permutations)
+
+	// Evaluate each permutation with the operations
+	for _, perm := range permutations {
+		evaluatePermutation(perm, ops, finalResult)
+	}
 }
 
 // checkAnswer takes the user's input, evaluates it, and compares it to the final result.
@@ -108,7 +188,7 @@ func checkAnswer(finalResult int, answer string) bool {
 	return evaluatedResult == finalResult
 }
 
-// evaluateExpression takes a string input and evaluates it as a simple arithmetic expression.
+// evaluateExpression takes a string input and evaluates it as a simple arithmetic expression. NAUGHTY
 func evaluateExpression(expression string) (int, error) {
 	var stack []int
 	var currentNumber int
@@ -171,6 +251,8 @@ func main() {
 
 	fmt.Println("Chosen Numbers:", allNumbers)
 	fmt.Println("Final Result after Operations:", finalResult)
+
+	findPermutationsAndEvaluate(finalResult, allNumbers)
 
 	// Get user's answer as a string input
 	var userAnswer string
