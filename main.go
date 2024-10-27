@@ -6,26 +6,38 @@ import (
 	"time"
 )
 
-func chooseBigNumbers( numberOfBigNumber int) vector[]
+func chooseBigNumbers(numberOfBigNumber int) []int {
+	bigNumbers := []int{25, 50, 75, 100}
+	numbersChosen := []int{}
+
+	for i := 0; i < numberOfBigNumber; i++ {
+		randomIndex := rand.Intn(len(bigNumbers)) // Use the globally seeded rand.Intn
+		randomElement := bigNumbers[randomIndex]
+		numbersChosen = append(numbersChosen, randomElement)
+		bigNumbers = append(bigNumbers[:randomIndex], bigNumbers[randomIndex+1:]...) // Remove chosen element
+	}
+
+	return numbersChosen
+}
 
 func main() {
 	fmt.Println("Welcome to countdown")
 
-	bigNumbers := []int{25, 50, 75, 100}
-	numbersChosen := []int{}
-
 	var numberOfBigNumber int
-	fmt.Println("Enter the number of big numbers ")
+	fmt.Print("Enter the number of big numbers: ")
 	fmt.Scan(&numberOfBigNumber)
 
-	for i := 0; i < numberOfBigNumber; i++ {
-		source := rand.NewSource(time.Now().UnixNano())
-		randomGenerator := rand.New(source)
-		randomIndex := randomGenerator.Intn(len(bigNumbers))
-		// Choose the element at the random index
-		randomElement := bigNumbers[randomIndex]
-		numbersChosen = append(numbersChosen, randomElement)
-		bigNumbers = append(bigNumbers[:randomIndex], bigNumbers[randomIndex+1:]...)
+	// Seed the random generator once at the beginning of the program
+	rand.Seed(time.Now().UnixNano())
+
+	// Get the chosen big numbers
+	allNumbersChosen := chooseBigNumbers(numberOfBigNumber)
+
+	// Add small numbers to make a total of 6 numbers
+	for len(allNumbersChosen) < 6 {
+		randomNumber := rand.Intn(10) + 1 // Random number between 1 and 10
+		allNumbersChosen = append(allNumbersChosen, randomNumber)
 	}
 
+	fmt.Println("Number is ", allNumbersChosen)
 }
