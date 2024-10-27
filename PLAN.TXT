@@ -1,0 +1,6 @@
+1) First a function that generates 4 numbers based on how many big numbers you choose 
+    a) You input either a number and it generates that number of big numbers from 25, 50, 75, 100, if you input less than 0 or more than 4 it asks you to generate them again
+    b) It generates the rest of the small numbers, numbers from 1-10
+    c) It prints out the rest of the 4 numbers
+
+2) A second function takes those numbers, and generates 6 - len(thatNumber) of small numbers (so between 2 and 5) --> Results in the introduction of the 
