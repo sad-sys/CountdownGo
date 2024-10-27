@@ -4,3 +4,10 @@
     c) It prints out the rest of the 4 numbers
 
 2) A second function takes those numbers, and generates 6 - len(thatNumber) of small numbers (so between 2 and 5) --> Results in the introduction of the 
+
+
+3) A third function generates a random number between 100 - 999
+
+4) A fourth function does all possible calculations involving the exisitng numbers and anytime a result is within 10 of the target number it is printed, from most points to least points
+    a) Vector of the 4 operations: +,-,/,*
+    b) An outer for loops takes each number and runs all 4 operations, it then takes the next two numbers and runs 
