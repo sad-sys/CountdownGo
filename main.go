@@ -20,6 +20,15 @@ func chooseBigNumbers(numberOfBigNumber int) []int {
 	return numbersChosen
 }
 
+func chooseSmallNumbers(allNumbersChosen []int) []int {
+	// Add small numbers to make a total of 6 numbers
+	for len(allNumbersChosen) < 6 {
+		randomNumber := rand.Intn(10) + 1 // Random number between 1 and 10
+		allNumbersChosen = append(allNumbersChosen, randomNumber)
+	}
+	return allNumbersChosen
+}
+
 func main() {
 	fmt.Println("Welcome to countdown")
 
@@ -33,11 +42,7 @@ func main() {
 	// Get the chosen big numbers
 	allNumbersChosen := chooseBigNumbers(numberOfBigNumber)
 
-	// Add small numbers to make a total of 6 numbers
-	for len(allNumbersChosen) < 6 {
-		randomNumber := rand.Intn(10) + 1 // Random number between 1 and 10
-		allNumbersChosen = append(allNumbersChosen, randomNumber)
-	}
+	allNumbersChosen = chooseSmallNumbers(allNumbersChosen)
 
 	fmt.Println("Number is ", allNumbersChosen)
 }
