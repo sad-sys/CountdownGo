@@ -2,41 +2,47 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"math/rand"
+	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
+
+type CalculationResult struct {
+	Result int
+	Steps  string
+}
+
+type GameData struct {
+	Target        int
+	ChosenNumbers []int
+	Results       []CalculationResult
+	UserResult    int
+	Difference    int
+}
 
 func chooseBigNumbers(numberOfBigNumber int) []int {
 	bigNumbers := []int{25, 50, 75, 100}
 	numbersChosen := []int{}
 
 	for i := 0; i < numberOfBigNumber; i++ {
-		randomIndex := rand.Intn(len(bigNumbers)) // Use the globally seeded rand.Intn
+		randomIndex := rand.Intn(len(bigNumbers))
 		randomElement := bigNumbers[randomIndex]
 		numbersChosen = append(numbersChosen, randomElement)
-		bigNumbers = append(bigNumbers[:randomIndex], bigNumbers[randomIndex+1:]...) // Remove chosen element
+		bigNumbers = append(bigNumbers[:randomIndex], bigNumbers[randomIndex+1:]...)
 	}
 
 	return numbersChosen
 }
 
 func chooseSmallNumbers(allNumbersChosen []int) []int {
-	// Add small numbers to make a total of 6 numbers
 	for len(allNumbersChosen) < 6 {
-		randomNumber := rand.Intn(10) + 1 // Random number between 1 and 10
+		randomNumber := rand.Intn(10) + 1
 		allNumbersChosen = append(allNumbersChosen, randomNumber)
 	}
 	return allNumbersChosen
-}
-
-func runOperation(i int, j int, k int, allNumbersChosen []int) int {
-	operations := []string{"+", "-", "*", "/"}
-	numberChosen := allNumbersChosen[i]
-	nextNumberChosen := allNumbersChosen[j]
-	operationChosen := operations[k]
-
-	// Call `doCalculation` with chosen numbers and operation
-	return doCalculation(numberChosen, nextNumberChosen, operationChosen)
 }
 
 func doCalculation(numberChosen int, nextNumberChosen int, operation string) int {
@@ -63,7 +69,6 @@ func generateCombinations(allNumbersChosen []int, size int) [][]int {
 
 	helper = func(start int, combo []int) {
 		if len(combo) == size {
-			// Make a copy of combo and add it to combinations
 			comboCopy := make([]int, len(combo))
 			copy(comboCopy, combo)
 			combinations = append(combinations, comboCopy)
@@ -78,49 +83,100 @@ func generateCombinations(allNumbersChosen []int, size int) [][]int {
 	return combinations
 }
 
-func applyOperations(numbers []int, currentResult int, index int, operations []string) {
+func applyOperations(numbers []int, currentResult int, index int, operations []string, target int, steps string, validResults *[]CalculationResult) {
 	if index == len(numbers) {
-		// We've reached the end, print the result
-		fmt.Printf("Result of expression: %d\n", currentResult)
+		if abs(currentResult-target) <= 10 {
+			*validResults = append(*validResults, CalculationResult{Result: currentResult, Steps: steps})
+		}
 		return
 	}
 
-	// Apply each operation to the next number in the sequence
 	for _, op := range operations {
-		newResult := doCalculation(currentResult, numbers[index], op)
-		fmt.Printf("Applying %d %s %d = %d\n", currentResult, op, numbers[index], newResult)
-		applyOperations(numbers, newResult, index+1, operations)
+		nextResult := doCalculation(currentResult, numbers[index], op)
+		newSteps := fmt.Sprintf("%s %s %d", steps, op, numbers[index])
+		applyOperations(numbers, nextResult, index+1, operations, target, newSteps, validResults)
 	}
 }
 
-func calculateOnCombinations(allNumbersChosen []int) {
+func calculateOnCombinations(allNumbersChosen []int, target int) []CalculationResult {
 	operations := []string{"+", "-", "*", "/"}
+	var validResults []CalculationResult
+
 	for size := 2; size <= len(allNumbersChosen); size++ {
 		combinations := generateCombinations(allNumbersChosen, size)
 		for _, combo := range combinations {
-			fmt.Printf("Calculating for combination: %v\n", combo)
-			applyOperations(combo, combo[0], 1, operations)
+			initialStep := fmt.Sprintf("%d", combo[0])
+			applyOperations(combo, combo[0], 1, operations, target, initialStep, &validResults)
 		}
 	}
+	return validResults
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func playHandler(w http.ResponseWriter, r *http.Request) {
+	numberOfBigNumber, _ := strconv.Atoi(r.URL.Query().Get("bigNumber"))
+
+	rand.Seed(time.Now().UnixNano())
+	target := rand.Intn(900) + 100
+	allNumbersChosen := chooseBigNumbers(numberOfBigNumber)
+	allNumbersChosen = chooseSmallNumbers(allNumbersChosen)
+	validResults := calculateOnCombinations(allNumbersChosen, target)
+
+	data := GameData{
+		Target:        target,
+		ChosenNumbers: allNumbersChosen,
+		Results:       validResults,
+	}
+
+	tmpl, _ := template.ParseFiles("index.html")
+	tmpl.Execute(w, data)
+}
+
+func submitHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	userResult, _ := strconv.Atoi(r.FormValue("userSolution"))
+	target, _ := strconv.Atoi(r.FormValue("target"))
+	difference := abs(userResult - target)
+
+	// Recreate the game data to show results
+	chosenNumbersStr := r.FormValue("chosenNumbers")
+	chosenNumbers := parseChosenNumbers(chosenNumbersStr)
+	validResults := calculateOnCombinations(chosenNumbers, target)
+
+	data := GameData{
+		Target:        target,
+		ChosenNumbers: chosenNumbers,
+		Results:       validResults,
+		UserResult:    userResult,
+		Difference:    difference,
+	}
+
+	tmpl, _ := template.ParseFiles("index.html")
+	tmpl.Execute(w, data)
+}
+
+func parseChosenNumbers(s string) []int {
+	parts := strings.Split(strings.Trim(s, "[]"), " ")
+	var numbers []int
+	for _, part := range parts {
+		if n, err := strconv.Atoi(part); err == nil {
+			numbers = append(numbers, n)
+		}
+	}
+	return numbers
 }
 
 func main() {
-	fmt.Println("Welcome to countdown")
-
-	var numberOfBigNumber int
-	fmt.Print("Enter the number of big numbers: ")
-	fmt.Scan(&numberOfBigNumber)
-
-	// Seed the random generator once at the beginning of the program
-	rand.Seed(time.Now().UnixNano())
-
-	// Assume `chooseBigNumbers` and `chooseSmallNumbers` are defined functions
-	// Get the chosen big numbers
-	allNumbersChosen := chooseBigNumbers(numberOfBigNumber)
-	allNumbersChosen = chooseSmallNumbers(allNumbersChosen)
-
-	fmt.Println("Numbers chosen are:", allNumbersChosen)
-
-	// Perform calculations on all combinations
-	calculateOnCombinations(allNumbersChosen)
+	http.HandleFunc("/play", playHandler)
+	http.HandleFunc("/submit", submitHandler)
+	http.Handle("/", http.FileServer(http.Dir(".")))
+	fmt.Println("Server started at http://localhost:8080")
+	http.ListenAndServe(":8080", nil)
 }

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown Game</title>
+</head>
+<body>
+    <h1>Countdown Game</h1>
+
+    <!-- Form to select number of big numbers and start game -->
+    <form action="/play" method="get">
+        <label for="bigNumber">Enter the number of big numbers (1-4):</label>
+        <input type="number" id="bigNumber" name="bigNumber" min="1" max="4" required>
+        <button type="submit">Start Game</button>
+    </form>
+
+    <!-- Display game data if it exists -->
+    {{if .Target}}
+        <h2>Game Results</h2>
+        <p><strong>Target Number:</strong> {{.Target}}</p>
+        <p><strong>Chosen Numbers:</strong> {{.ChosenNumbers}}</p>
+
+        <!-- Form to input user solution after game starts -->
+        <form action="/submit" method="post">
+            <label for="userSolution">Your Solution:</label>
+            <input type="number" id="userSolution" name="userSolution" required>
+            <input type="hidden" name="target" value="{{.Target}}">
+            <input type="hidden" name="chosenNumbers" value="{{.ChosenNumbers}}">
+            <button type="submit">Submit Solution</button>
+        </form>
+
+        {{if .UserResult}}
+            <h3>Your Result</h3>
+            <p>Your solution: {{.UserResult}}</p>
+            <p>Difference from Target: {{.Difference}}</p>
+        {{end}}
+
+        <h3>Possible Solutions within 10 of Target</h3>
+        <ul>
+            {{range .Results}}
+                <li>Result: {{.Result}}, Calculation: {{.Steps}}</li>
+            {{end}}
+        </ul>
+    {{end}}
+</body>
+</html>
